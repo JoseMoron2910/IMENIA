@@ -13,6 +13,3 @@ data/
 Thumbs.db
 Desktop.ini
 .DS_Store
-
-# Capturas de pantalla sueltas en la raíz del proyecto
-Captura de pantalla*.png
