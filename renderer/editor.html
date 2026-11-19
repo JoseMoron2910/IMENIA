@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' imenia-img: data:; style-src 'self'; script-src 'self'">
+  <title>IMENIA — Editor</title>
+  <link rel="stylesheet" href="styles/global.css">
+</head>
+<body class="editor-body">
+  <div class="editor-shell">
+
+    <!-- Columna izquierda: visor -->
+    <section class="viewer" id="viewer">
+      <div class="viewer-head">
+        <span id="view-folder" class="dim"></span>
+        <span class="spacer"></span>
+        <span id="zoom-hint" class="dim" hidden>Clic: ampliar · Rueda: zoom · Arrastrar: mover</span>
+        <button id="btn-fit" class="btn btn-ghost" hidden title="Volver al ajuste (o doble clic en la imagen)">⟲ Ajustar</button>
+        <span id="view-dims" class="dim"></span>
+      </div>
+      <div class="viewer-stage">
+        <img id="the-image" alt="" draggable="false">
+      </div>
+    </section>
+
+    <!-- Columna derecha: formulario -->
+    <aside class="form-pane">
+      <div class="form-head">
+        <h2 id="form-title">Cargando…</h2>
+        <button class="btn btn-ghost" id="btn-close" title="Cerrar sin guardar (Esc)">✕ Cerrar</button>
+      </div>
+
+      <div class="nav-row">
+        <button type="button" class="btn" id="btn-prev" title="Anterior (Alt+←)">‹ Anterior</button>
+        <span id="nav-position" class="dim">–</span>
+        <button type="button" class="btn" id="btn-next" title="Siguiente (Alt+→)">Siguiente ›</button>
+      </div>
+
+      <label class="field">
+        <span>Nombre del archivo</span>
+        <div class="name-row">
+          <input id="in-name" maxlength="120" spellcheck="false">
+          <span id="ext-badge" class="ext-badge"></span>
+        </div>
+        <span class="hint" id="name-hint">El archivo físico se renombrará en disco al guardar.</span>
+      </label>
+
+      <div class="field">
+        <span>Tags (Enter para añadir · se aplican al guardar)</span>
+        <div class="chips" id="chip-box"></div>
+        <input id="in-tag" placeholder="Escribe un tag y pulsa Enter…" list="tag-list" autocomplete="off" spellcheck="false">
+        <datalist id="tag-list"></datalist>
+      </div>
+
+      <label class="field grow">
+        <span>Descripción (caption para el dataset)</span>
+        <textarea id="in-description" placeholder="Describe la imagen con detalle: sujeto, contexto, estilo, acciones, luz… Esta descripción es lo que entrenará al modelo junto a la imagen."></textarea>
+        <span class="hint" id="char-count">0/8000 caracteres</span>
+      </label>
+
+      <div class="form-status" id="status"></div>
+
+      <div class="form-actions">
+        <button class="btn btn-danger" id="btn-delete">🗑 Eliminar imagen</button>
+        <span class="spacer"></span>
+        <button class="btn btn-primary" id="btn-save">💾 Guardar <small>(Ctrl+S)</small></button>
+      </div>
+    </aside>
+  </div>
+
+  <dialog id="dlg-confirm-close" class="modal">
+    <div>
+      <h3>¿Cerrar sin guardar?</h3>
+      <p>Hay cambios sin guardar (nombre, tags o descripción).</p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-danger" data-close="force">Cerrar sin guardar</button>
+        <button type="button" class="btn btn-primary" data-close="stay">Quedarme</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="dlg-confirm-delete" class="modal">
+    <div>
+      <h3>¿Eliminar esta imagen?</h3>
+      <p>El archivo se moverá a la papelera interna <code>data/.trash/</code> y se borrarán sus tags.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="button" class="btn btn-danger" id="del-confirm">Eliminar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <script src="js/editor.js"></script>
+</body>
+</html>

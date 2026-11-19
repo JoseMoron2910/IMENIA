@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'self'; img-src 'self' imenia-img: data:; style-src 'self'; script-src 'self'">
+  <title>IMENIA — Biblioteca</title>
+  <link rel="stylesheet" href="styles/global.css">
+</head>
+<body>
+  <div class="app-shell">
+
+    <header class="topbar">
+      <span class="brand">IMENIA</span>
+      <span class="version-badge" title="Versión de la interfaz: si esto no dice v0.2.1, estás viendo una copia vieja">v0.2.1</span>
+      <div class="search-wrap">
+        <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+        <input id="search-input" class="search" type="search"
+               placeholder="Buscar por nombre, tag o descripción…" autocomplete="off">
+      </div>
+      <div class="spacer"></div>
+      <button id="btn-export" class="btn" title="Exporta un dataset (JSON/CSV/captions) del ámbito actual">📤 Exportar dataset</button>
+      <button id="btn-import" class="btn" title="Copiar imágenes a la carpeta seleccionada">📥 Importar imágenes</button>
+      <button id="btn-new-folder" class="btn btn-primary" title="Crear una carpeta de imágenes">＋ Nueva carpeta</button>
+    </header>
+
+    <div class="main-area">
+      <aside class="sidebar">
+        <div class="sidebar-head">
+          <span>Carpetas</span>
+        </div>
+        <nav id="folder-list" class="folder-list"></nav>
+        <div class="sidebar-foot">
+          <span id="storage-hint" class="hint"></span>
+        </div>
+      </aside>
+
+      <main class="content">
+        <div class="content-head">
+          <h2 id="current-title">Todas las imágenes</h2>
+          <span id="count-badge" class="badge"></span>
+        </div>
+        <div id="grid" class="grid"></div>
+        <div id="empty-state" class="empty-state" hidden>
+          <div class="empty-icon">🖼️</div>
+          <h3>Aún no hay imágenes aquí</h3>
+          <p>Crea una carpeta y pulsa <b>Importar imágenes</b> para empezar a construir tu dataset.</p>
+        </div>
+      </main>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+  </div>
+
+
+  <!-- Menú contextual de carpetas (posición fija) -->
+  <div id="ctx-menu" class="ctx-menu" hidden></div>
+
+  <!-- ====================== DIÁLOGO: Nueva carpeta ====================== -->
+  <dialog id="dlg-new-folder" class="modal">
+    <form method="dialog" id="form-new-folder">
+      <h3>Nueva carpeta</h3>
+      <label class="field">
+        <span>Nombre de la carpeta</span>
+        <input id="nf-name" placeholder="p. ej. Retratos_2024" maxlength="100" autofocus>
+      </label>
+      <label class="field">
+        <span>Contraseña (opcional — protege la carpeta dentro de la app)</span>
+        <input id="nf-password" type="password" placeholder="Déjala vacía para no protegerla">
+      </label>
+      <label class="field">
+        <span>Confirmar contraseña</span>
+        <input id="nf-password2" type="password" placeholder="Repite la contraseña">
+      </label>
+      <p class="note">⚠️ La contraseña impide ver el contenido desde la aplicación, pero los archivos no se cifran en disco (planificado para v0.2).</p>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-primary" id="nf-submit">Crear carpeta</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ====================== DIÁLOGO: Desbloquear ====================== -->
+  <dialog id="dlg-unlock" class="modal">
+    <form method="dialog" id="form-unlock">
+      <h3>Desbloquear carpeta</h3>
+      <p id="unlock-folder-name" class="dim"></p>
+      <label class="field">
+        <span>Contraseña de la carpeta</span>
+        <input id="unlock-password" type="password" autofocus>
+      </label>
+      <p id="unlock-error" class="error-text" hidden>Contraseña incorrecta.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Desbloquear</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ================== DIÁLOGO: Renombrar carpeta ================== -->
+  <dialog id="dlg-rename-folder" class="modal">
+    <form method="dialog" id="form-rename-folder">
+      <h3>Renombrar carpeta</h3>
+      <label class="field">
+        <span>Nuevo nombre</span>
+        <input id="rf-name" maxlength="100" autofocus>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ================ DIÁLOGO: Contraseña de carpeta ================ -->
+  <dialog id="dlg-set-password" class="modal">
+    <form method="dialog" id="form-set-password">
+      <h3 id="sp-title">Contraseña de la carpeta</h3>
+      <label class="field" id="sp-current-row">
+        <span>Contraseña actual</span>
+        <input id="sp-current" type="password" autofocus>
+      </label>
+      <label class="field">
+        <span>Nueva contraseña (vacía = quitar la protección)</span>
+        <input id="sp-new" type="password" placeholder="Mínimo 4 caracteres">
+      </label>
+      <p class="note">Deja el campo vacío y guarda para eliminar la contraseña de esta carpeta.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-primary">Guardar cambios</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ================ DIÁLOGO: Eliminar carpeta ================= -->
+  <dialog id="dlg-delete-folder" class="modal">
+    <form method="dialog" id="form-delete-folder">
+      <h3>Eliminar carpeta</h3>
+      <p>Se eliminará «<b id="df-name"></b>» con <b id="df-count"></b> imagen(es).</p>
+      <p class="dim">Los archivos se moverán a la papelera interna (<code>data/.trash/</code>), de donde podrás recuperarlos manualmente.</p>
+      <label class="field">
+        <span>Escribe el nombre de la carpeta para confirmar</span>
+        <input id="df-confirm" placeholder="Nombre exacto" autofocus>
+      </label>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="submit" class="btn btn-danger" id="df-submit" disabled>Eliminar definitivamente</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- ================= DIÁLOGO: Resultado del export ================ -->
+  <dialog id="dlg-export" class="modal">
+    <div>
+      <h3>Exportar dataset</h3>
+      <p id="ex-summary"></p>
+      <p class="dim">Se generan <code>dataset.json</code>, <code>dataset.csv</code> y <code>captions/*.txt</code> dentro de <code>data/exports/</code>.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close>Cerrar</button>
+        <button type="button" class="btn btn-primary" id="ex-open">Abrir carpeta de export</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ================= DIÁLOGO: Eliminar imagen ================= -->
+  <dialog id="dlg-delete-image" class="modal">
+    <div>
+      <h3>Eliminar imagen</h3>
+      <p>La imagen «<b id="di-name"></b>» se moverá a la papelera interna (<code>data/.trash/</code>) junto con sus tags.</p>
+      <div class="modal-actions">
+        <button type="button" class="btn" data-close>Cancelar</button>
+        <button type="button" class="btn btn-danger" id="di-confirm">Eliminar</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="js/library.js"></script>
+
+</body>
+</html>

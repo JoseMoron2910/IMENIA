@@ -1,0 +1,47 @@
+{
+  "name": "imenia",
+  "productName": "IMENIA",
+  "version": "0.2.1",
+  "description": "Biblioteca de imágenes local y portable con carpetas protegidas por contraseña, etiquetado y descripciones para crear datasets de entrenamiento de IA.",
+  "main": "main.js",
+  "private": true,
+  "license": "MIT",
+  "author": "Jose M.",
+  "scripts": {
+    "start": "electron .",
+    "smoke-test": "electron . --smoke-test"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "image-size": "^2.1.0",
+    "sql.js": "^1.17.0"
+  },
+  "devDependencies": {
+    "electron": "^38.1.1",
+    "electron-builder": "^26.18.0"
+  },
+  "build": {
+    "appId": "org.imenia.desktop",
+    "productName": "IMENIA",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "lib/**",
+      "renderer/**"
+    ],
+    "asar": true,
+    "asarUnpack": [
+      "node_modules/sql.js/dist/sql-wasm.wasm"
+    ],
+    "win": {
+      "target": [
+        "dir"
+      ]
+    }
+  }
+}
